@@ -1,0 +1,52 @@
+---
+- name: Add Brightbox ruby repo
+  apt_repository:
+    validate_certs: no
+    repo: 'ppa:brightbox/ruby-ng'
+    state: present
+
+- name: install ruby and dependencies for compiling gems
+  apt:
+    pkg:
+      - "ruby{{ ruby_version }}"
+      - "ruby{{ ruby_version }}-dev"
+
+      - autoconf
+      - bison
+      - build-essential
+      - gcc
+      - libffi-dev
+      - libgdbm-dev
+      - libgdbm5
+      - libncurses-dev
+      - libreadline-dev
+      - libssl-dev
+      - libyaml-dev
+      - zlib1g-dev
+    cache_valid_time: 86400 # 1 day
+
+- name: Ensure bundle dir exists
+  file:
+    state: directory
+    path: "{{ ruby_gem_bundle_dir }}"
+
+# - name: Download and unzip initial gem bundle
+#   unarchive:
+#     src: "{{ ruby_gem_bundle_url }}"
+#     dest: "{{ ruby_gem_bundle_dir }}"
+#     remote_src: yes
+
+- name: skip install of gem docs
+  lineinfile:
+    dest: "/etc/gemrc"
+    line: "gem: --no-rdoc --no-ri"
+    create: True
+
+- name: update rubygems
+  command: 'gem update --system'
+  changed_when: False
+
+- name: update bundler gem
+  command: 'gem install bundler'
+  args:
+    creates: "/usr/local/bin/bundle"
